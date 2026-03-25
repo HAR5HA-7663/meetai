@@ -22,6 +22,7 @@ from vision.analyzer import ScreenshotAnalyzer
 from ai.cli_provider import CLIProvider
 from ai.context import load_context
 from ai import prompts
+from audio.pipeline import AudioPipeline
 
 import logging
 logger = logging.getLogger(__name__)
@@ -36,8 +37,12 @@ class MeetAI:
             context_window_minutes=self.config.get("ai", "context_window_minutes", 10)
         )
         self.screenshot_analyzer = ScreenshotAnalyzer(self.config)
+        self.audio_pipeline = AudioPipeline(self.config)
         self.hotkeys = HotkeyManager()
         self._context = None
+
+        # Wire transcript to state
+        event_bus.transcript_updated.connect(self.state.add_transcript)
 
     def _load_context(self):
         if self._context is None:
@@ -51,18 +56,17 @@ class MeetAI:
         self.screenshot_analyzer.analyze(mode="meeting")
 
     def _on_toggle_recording(self):
-        """Hotkey: toggle audio recording."""
-        if self.state.is_recording:
+        """Hotkey: toggle audio recording and transcription."""
+        if self.audio_pipeline.is_running:
+            self.audio_pipeline.stop()
             self.state.is_recording = False
-            event_bus.recording_stopped.emit()
             event_bus.status_update.emit("Recording stopped")
-            logger.info("Recording stopped")
+            logger.info("Audio pipeline stopped")
         else:
+            self.audio_pipeline.start()
             self.state.is_recording = True
-            event_bus.recording_started.emit()
-            event_bus.status_update.emit("Recording started")
-            logger.info("Recording started")
-            # Audio capture will be started in Phase 3
+            event_bus.status_update.emit("Recording + transcribing...")
+            logger.info("Audio pipeline started")
 
     def _on_ask_ai(self):
         """Hotkey: ask AI about current transcript."""
