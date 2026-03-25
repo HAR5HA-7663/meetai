@@ -55,6 +55,7 @@ This file serves as a persistent learning document for Claude Code when working 
 | 3 | Used KDE D-Bus for hotkeys (Linux-only) | Use `pynput` for cross-platform global hotkeys. | **Same as above — cross-platform first.** |
 | 4 | Proposed region selection with slurp | User wants instant full-monitor capture on hotkey (Alt+/), no selection UI. Capture the MSI monitor (monitor 2). | **Screenshot = instant capture of configured monitor. No user interaction.** |
 | 5 | Proposed Anthropic/OpenAI Python SDKs for AI | User wants to use existing CLI tools: `claude -p`, `codex exec`, `gemini -p`. No SDK needed. | **Use CLI tools for AI, not Python SDKs. The CLI tools handle auth.** |
+| 6 | Named package directory `platform/` | Shadows Python stdlib `platform` module, breaks pynput. Renamed to `meetai_platform/`. | **Never name packages after stdlib modules (platform, os, sys, etc.)** |
 
 ---
 
@@ -62,23 +63,16 @@ This file serves as a persistent learning document for Claude Code when working 
 
 ### Session 1 (2026-03-25) — Initial Build
 
-**Status:** Phase 1 in progress
+**Status:** All 5 phases complete. App is functional.
 
 - [x] Research Parakeet AI, Cluely AI, open-source clones
 - [x] Evaluate Pluely, Natively, OpenCluely as base references
 - [x] Design architecture and write implementation plan
-- [x] Create project structure
-- [x] Install dependencies (uv venv + uv pip)
-- [x] Write config.py and config.toml
-- [x] Write platform/__init__.py, platform/windows.py
-- [ ] Write platform/linux.py, platform/macos.py
-- [ ] Write core/event_bus.py
-- [ ] Write overlay/window.py, widgets.py, theme.py, tray.py
-- [ ] Write main.py
-- [ ] Phase 2: Screenshot + AI + personal context
-- [ ] Phase 3: Audio capture + transcription
-- [ ] Phase 4: AI intelligence
-- [ ] Phase 5: Polish
+- [x] Phase 1: Project structure, config, platform modules, overlay window, theme, tray
+- [x] Phase 2: Screenshot (mss), hotkeys (pynput), CLI AI provider, personal context loader
+- [x] Phase 3: Audio capture (sounddevice), Silero VAD, faster-whisper transcription (CUDA)
+- [x] Phase 4: MeetingAssistant with auto-suggest, question detection, context-aware responses
+- [x] Phase 5: Copy to clipboard, transcript export, profile selector, auto-suggest toggle, README
 
 ---
 

@@ -89,9 +89,32 @@ class MeetAI:
 
     def connect_ui(self, overlay):
         """Connect overlay UI buttons to actions."""
+        self._overlay = overlay
         overlay.control_bar.screenshot_btn.clicked.connect(self._on_screenshot)
         overlay.control_bar.record_btn.clicked.connect(self._on_toggle_recording)
         overlay.control_bar.ask_btn.clicked.connect(self._on_ask_ai)
+        overlay.control_bar.auto_suggest_btn.clicked.connect(self._on_toggle_auto_suggest)
+        overlay.control_bar.profile_select.currentTextChanged.connect(self._on_profile_changed)
+        overlay.control_bar.provider_select.currentTextChanged.connect(self._on_provider_changed)
+
+    def _on_toggle_auto_suggest(self):
+        self.assistant.toggle_auto_suggest()
+        btn = self._overlay.control_bar.auto_suggest_btn
+        if self.assistant.auto_suggest_enabled:
+            btn.setText("Auto: ON")
+        else:
+            btn.setText("Auto: OFF")
+
+    def _on_profile_changed(self, profile: str):
+        self._context = None  # Force reload
+        self.screenshot_analyzer._context = None
+        self.assistant._context = None
+        logger.info(f"Resume profile changed to: {profile}")
+        self.config._data["ai"]["resume_profile"] = profile
+
+    def _on_provider_changed(self, provider: str):
+        self.config._data["ai"]["default_provider"] = provider
+        logger.info(f"AI provider changed to: {provider}")
 
 
 def main():
