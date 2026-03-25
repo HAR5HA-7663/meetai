@@ -134,22 +134,18 @@ class OverlayWindow(QWidget):
 
     def _hide_from_capture(self):
         """Call platform-specific API to hide from screen capture."""
-        try:
-            from meetai_platform import hide_from_capture
-            hide_from_capture(self)
-        except ImportError:
-            pass
-        # Direct import approach
         import sys
-        if sys.platform == "win32":
-            from platform.windows import hide_from_capture
+        try:
+            if sys.platform == "win32":
+                from meetai_platform.windows import hide_from_capture
+            elif sys.platform == "darwin":
+                from meetai_platform.macos import hide_from_capture
+            else:
+                from meetai_platform.linux import hide_from_capture
             hide_from_capture(self)
-        elif sys.platform == "darwin":
-            from platform.macos import hide_from_capture
-            hide_from_capture(self)
-        else:
-            from platform.linux import hide_from_capture
-            hide_from_capture(self)
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"Could not hide from capture: {e}")
 
     def _position_window(self):
         """Position the window at the configured location."""
