@@ -22,6 +22,7 @@ from vision.analyzer import ScreenshotAnalyzer
 from ai.cli_provider import CLIProvider
 from ai.context import load_context
 from ai import prompts
+from ai.assistant import MeetingAssistant
 from audio.pipeline import AudioPipeline
 
 import logging
@@ -38,6 +39,7 @@ class MeetAI:
         )
         self.screenshot_analyzer = ScreenshotAnalyzer(self.config)
         self.audio_pipeline = AudioPipeline(self.config)
+        self.assistant = MeetingAssistant(self.config, self.state)
         self.hotkeys = HotkeyManager()
         self._context = None
 
@@ -71,34 +73,7 @@ class MeetAI:
     def _on_ask_ai(self):
         """Hotkey: ask AI about current transcript."""
         logger.info("Ask AI hotkey triggered")
-        import threading
-        threading.Thread(target=self._ask_ai_async, daemon=True).start()
-
-    def _ask_ai_async(self):
-        transcript = self.state.get_recent_transcript()
-        if not transcript:
-            event_bus.ai_error.emit("No transcript available. Start recording first.")
-            return
-
-        context = self._load_context()
-        prompt = prompts.ASK_AI.format(
-            name="Harsha",
-            context=context,
-            transcript=transcript,
-        )
-
-        tool = self.config.get("ai", "default_provider", "claude")
-        provider = CLIProvider(tool=tool)
-
-        event_bus.ai_response_started.emit()
-
-        def on_chunk(chunk):
-            event_bus.ai_response_chunk.emit(chunk)
-
-        result = provider.stream_response(prompt, callback=on_chunk)
-        if not result or result.startswith("Error:"):
-            result = provider.get_response(prompt)
-        event_bus.ai_response_complete.emit(result)
+        self.assistant.ask_about_transcript()
 
     def _on_toggle_overlay(self):
         """Hotkey: toggle overlay visibility."""
