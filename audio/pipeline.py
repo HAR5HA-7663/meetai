@@ -1,18 +1,28 @@
-"""Audio processing pipeline: capture → VAD → transcription → event bus."""
+"""Audio processing pipeline: capture → VAD → live transcription → AI trigger.
+
+Two-stage transcription:
+1. While someone is speaking: transcribe every ~2s of accumulated audio → show live interim text
+2. When they stop speaking: transcribe the full segment → emit final text + trigger AI
+"""
 
 import logging
 import threading
+import time
+import numpy as np
 
-from audio.capture import AudioCapture, find_monitor_source
+from audio.capture import AudioCapture
 from audio.vad import VoiceActivityDetector
 from audio.transcriber import Transcriber
 from core.event_bus import event_bus
 
 logger = logging.getLogger(__name__)
 
+# How often to do interim transcription while speech is ongoing (seconds)
+INTERIM_INTERVAL = 2.0
+
 
 class AudioPipeline:
-    """Manages the full audio processing pipeline in background threads."""
+    """Manages the full audio pipeline with live streaming transcription."""
 
     def __init__(self, config):
         self.config = config
@@ -21,7 +31,6 @@ class AudioPipeline:
 
         self.sample_rate = audio_cfg.get("sample_rate", 16000)
 
-        # Find audio device
         source = audio_cfg.get("source", "auto")
         device_id = None if source == "auto" else int(source)
 
@@ -46,22 +55,18 @@ class AudioPipeline:
         self._thread = None
 
     def start(self):
-        """Start the audio pipeline."""
         if self._running:
             return
-
         if not self.capture.start():
             event_bus.error_occurred.emit("audio", "Failed to start audio capture")
             return
-
         self._running = True
         self._thread = threading.Thread(target=self._process_loop, daemon=True)
         self._thread.start()
         event_bus.recording_started.emit()
-        logger.info("Audio pipeline started")
+        logger.info("Audio pipeline started (live streaming mode)")
 
     def stop(self):
-        """Stop the audio pipeline."""
         self._running = False
         self.capture.stop()
         self.vad.reset()
@@ -72,20 +77,48 @@ class AudioPipeline:
         logger.info("Audio pipeline stopped")
 
     def _process_loop(self):
-        """Main processing loop: read audio → VAD → transcribe."""
+        """Main loop: collect audio, do VAD, live-transcribe during speech, final on silence."""
+        speech_buffer = []          # all chunks for current speech turn
+        last_interim_time = 0       # when we last did an interim transcription
+        interim_offset = 0          # how many samples we already transcribed as interim
+
         while self._running:
             chunk = self.capture.get_chunk(timeout=0.1)
             if chunk is None:
                 continue
 
-            # Run VAD
-            speech_ended, speech_audio = self.vad.process_chunk(chunk)
+            # Run VAD on this chunk
+            speech_ended, full_speech = self.vad.process_chunk(chunk)
 
-            if speech_ended and speech_audio is not None:
-                # Transcribe the speech segment
-                text = self.transcriber.transcribe(speech_audio, self.sample_rate)
-                if text:
-                    event_bus.transcript_updated.emit(text)
+            if self.vad._is_speaking:
+                # Speech is ongoing — accumulate and do interim transcription
+                speech_buffer.append(chunk)
+                now = time.time()
+
+                if now - last_interim_time >= INTERIM_INTERVAL and len(speech_buffer) > 0:
+                    # Do interim transcription on accumulated audio so far
+                    all_audio = np.concatenate(speech_buffer)
+                    if len(all_audio) > self.sample_rate * 0.5:  # at least 0.5s
+                        interim_text = self.transcriber.transcribe(all_audio, self.sample_rate)
+                        if interim_text:
+                            event_bus.transcript_interim.emit(interim_text)
+                            logger.debug(f"Interim: {interim_text[:80]}...")
+                    last_interim_time = now
+
+            if speech_ended and full_speech is not None:
+                # Speaker stopped — do final transcription on the full segment
+                final_text = self.transcriber.transcribe(full_speech, self.sample_rate)
+                if final_text:
+                    # Emit final transcript (replaces interim) and trigger AI
+                    event_bus.transcript_final.emit(final_text)
+                    event_bus.transcript_updated.emit(final_text)
+                    event_bus.speech_turn_ended.emit(final_text)
+                    logger.info(f"Final: {final_text[:100]}...")
+
+                # Reset for next speech turn
+                speech_buffer = []
+                last_interim_time = 0
+                interim_offset = 0
 
     @property
     def is_running(self):

@@ -5,8 +5,13 @@ from PyQt6.QtCore import QObject, pyqtSignal
 
 class EventBus(QObject):
     # Transcript events
-    transcript_updated = pyqtSignal(str)           # new transcript text
+    transcript_interim = pyqtSignal(str)           # live partial text (updates in-place)
+    transcript_final = pyqtSignal(str)             # finalized segment (appended)
+    transcript_updated = pyqtSignal(str)           # alias for final (backward compat)
     transcript_cleared = pyqtSignal()
+
+    # Speech turn events
+    speech_turn_ended = pyqtSignal(str)            # full text from one speaker turn → triggers AI
 
     # AI response events
     ai_response_started = pyqtSignal()

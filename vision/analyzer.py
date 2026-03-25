@@ -4,7 +4,7 @@ import logging
 import threading
 from vision.screenshot import capture_monitor
 from ai.cli_provider import CLIProvider
-from ai.prompts import SCREENSHOT_ANALYSIS, CODING_INTERVIEW
+from ai import prompts
 from ai.context import load_context
 from core.event_bus import event_bus
 
@@ -37,7 +37,6 @@ class ScreenshotAnalyzer:
         self._ensure_loaded()
 
         try:
-            # Capture screenshot
             event_bus.screenshot_analyzing.emit()
             event_bus.status_update.emit("Capturing screenshot...")
 
@@ -47,32 +46,18 @@ class ScreenshotAnalyzer:
             )
             event_bus.screenshot_taken.emit(path)
 
-            # Build prompt
-            name = "Harsha"
+            # Build the proper system-aware prompt
             if mode == "coding":
-                prompt = CODING_INTERVIEW.format(name=name, context=self._context)
+                prompt = prompts.build_coding(name="Harsha", context=self._context)
             else:
-                prompt = SCREENSHOT_ANALYSIS.format(name=name, context=self._context)
+                prompt = prompts.build_screenshot(name="Harsha", context=self._context)
 
             event_bus.status_update.emit("Analyzing screenshot with AI...")
             event_bus.ai_response_started.emit()
 
-            # Stream response
-            def on_chunk(chunk):
-                event_bus.ai_response_chunk.emit(chunk)
-
-            full_response = self._provider.stream_response(
-                prompt=f"Analyze this screenshot at: {path}",
-                context=self._context + "\n\n" + prompt,
-                callback=on_chunk,
-            )
-
-            # If streaming didn't produce output, try non-streaming
-            if not full_response or full_response.startswith("Error:"):
-                full_response = self._provider.analyze_image(path, prompt, self._context)
-                event_bus.ai_response_complete.emit(full_response)
-            else:
-                event_bus.ai_response_complete.emit(full_response)
+            # Use image analysis (Claude can see the screenshot)
+            full_response = self._provider.analyze_image(path, prompt)
+            event_bus.ai_response_complete.emit(full_response)
 
         except Exception as e:
             logger.error(f"Screenshot analysis failed: {e}")

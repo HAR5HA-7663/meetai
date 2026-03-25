@@ -15,6 +15,9 @@ from core.event_bus import event_bus
 class TranscriptPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._finalized_text = ""  # All confirmed transcript lines
+        self._interim_text = ""    # Current live partial text
+
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
@@ -23,7 +26,11 @@ class TranscriptPanel(QWidget):
         label = QLabel("LIVE TRANSCRIPT")
         label.setObjectName("section_label")
         header.addWidget(label)
+
+        self.speaking_label = QLabel("")
+        self.speaking_label.setObjectName("status_label")
         header.addStretch()
+        header.addWidget(self.speaking_label)
 
         self.clear_btn = QPushButton("Clear")
         self.clear_btn.setObjectName("control_btn")
@@ -45,12 +52,40 @@ class TranscriptPanel(QWidget):
         self.text_edit.setPlaceholderText("Press Alt+R to start recording...")
         layout.addWidget(self.text_edit)
 
-        event_bus.transcript_updated.connect(self.append_text)
+        # Live interim text — updates in-place as someone speaks
+        event_bus.transcript_interim.connect(self._on_interim)
+        # Final text — appended when speaker stops
+        event_bus.transcript_final.connect(self._on_final)
         event_bus.transcript_cleared.connect(self.clear)
 
-    def append_text(self, text: str):
-        self.text_edit.append(text)
+    def _on_interim(self, text: str):
+        """Live update: show what's being said right now (replaces previous interim)."""
+        self._interim_text = text
+        self._render()
+        self.speaking_label.setText("speaking...")
+        self.speaking_label.setStyleSheet("color: rgba(255, 200, 50, 0.9);")
+
+    def _on_final(self, text: str):
+        """Finalized: speaker stopped, lock this text in and clear interim."""
+        if text:
+            self._finalized_text += ("" if not self._finalized_text else "\n") + text
+        self._interim_text = ""
+        self._render()
+        self.speaking_label.setText("")
+
+    def _render(self):
+        """Re-render the transcript panel with finalized + interim text."""
+        display = self._finalized_text
+        if self._interim_text:
+            if display:
+                display += "\n"
+            display += f">> {self._interim_text}"  # >> prefix for live text
+        self.text_edit.setPlainText(display)
         self.text_edit.moveCursor(QTextCursor.MoveOperation.End)
+
+    def append_text(self, text: str):
+        # Backward compat — treat as final
+        self._on_final(text)
 
     def clear(self):
         self.text_edit.clear()
