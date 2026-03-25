@@ -1,0 +1,37 @@
+[general]
+theme = "dark"
+overlay_opacity = 0.92
+overlay_position = "top-right"
+overlay_width = 420
+overlay_height = 600
+
+[audio]
+source = "auto"
+sample_rate = 16000
+vad_threshold = 0.5
+silence_duration_ms = 1500
+
+[transcription]
+engine = "faster-whisper"
+model = "base.en"
+language = "en"
+device = "auto"
+
+[ai]
+default_provider = "claude"
+vision_provider = "claude"
+code_provider = "codex"
+general_provider = "gemini"
+context_window_minutes = 10
+resume_profile = "sde"
+
+[screenshot]
+capture_monitor = 2
+save_path = "/tmp/meetai_screenshot.png"
+
+[hotkeys]
+screenshot_analyze = "<alt>+/"
+toggle_recording = "<alt>+r"
+ask_ai = "<alt>+a"
+toggle_overlay = "<alt>+h"
+quit = "<alt>+q"
