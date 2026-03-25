@@ -35,9 +35,11 @@ class AudioPipeline:
             silence_duration_ms=audio_cfg.get("silence_duration_ms", 1500),
         )
         self.transcriber = Transcriber(
-            model_size=trans_cfg.get("model", "base.en"),
-            device=trans_cfg.get("device", "auto"),
+            model_size=trans_cfg.get("model", "large-v3"),
+            device=trans_cfg.get("device", "cuda"),
             language=trans_cfg.get("language", "en"),
+            compute_type=trans_cfg.get("compute_type", "float16"),
+            gpu_device_index=trans_cfg.get("gpu_device_index", 0),
         )
 
         self._running = False

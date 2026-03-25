@@ -18,9 +18,11 @@ DEFAULT_CONFIG = {
     },
     "transcription": {
         "engine": "faster-whisper",
-        "model": "base.en",
+        "model": "large-v3",
         "language": "en",
-        "device": "auto",
+        "device": "cuda",
+        "compute_type": "float16",
+        "gpu_device_index": 0,
     },
     "ai": {
         "default_provider": "claude",
