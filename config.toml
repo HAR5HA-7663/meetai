@@ -30,6 +30,10 @@ general_provider = "gemini"
 context_window_minutes = 10
 resume_profile = "sde"
 
+# Which monitor to show the overlay on (1=portrait DP-1, 2=MSI DP-4)
+# Put overlay on the monitor you're NOT sharing
+overlay_monitor = 1
+
 [screenshot]
 capture_monitor = 2
 save_path = "/tmp/meetai_screenshot.png"

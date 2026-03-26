@@ -102,12 +102,26 @@ def capture_monitor(monitor_index: int = 2, save_path: str | None = None) -> str
     try:
         # Step 1: Capture full desktop with spectacle
         full_path = os.path.join(tempfile.gettempdir(), "meetai_full.png")
+
+        # Remove old file so we can detect when new one is written
+        if os.path.exists(full_path):
+            os.remove(full_path)
+
         result = subprocess.run(
             ["spectacle", "-f", "-b", "-n", "-o", full_path],
             capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0:
             raise RuntimeError(f"spectacle failed: {result.stderr}")
+
+        # Wait for file to appear (spectacle is async)
+        import time
+        for _ in range(20):
+            if os.path.exists(full_path) and os.path.getsize(full_path) > 0:
+                break
+            time.sleep(0.1)
+        else:
+            raise RuntimeError("spectacle did not produce output file")
 
         # Step 2: Crop to target monitor region
         img = Image.open(full_path)
