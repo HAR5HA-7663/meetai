@@ -3,7 +3,7 @@
 DARK_THEME = """
 /* Main floating bar */
 QWidget#overlay_main {
-    background-color: rgba(12, 12, 16, 230);
+    background-color: rgba(12, 12, 16, 190);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 16px;
 }
@@ -47,7 +47,7 @@ QLabel#section_header {
 }
 
 QTextEdit#transcript_area {
-    background-color: rgba(255, 255, 255, 0.03);
+    background-color: rgba(255, 255, 255, 0.02);
     color: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 10px;
@@ -60,7 +60,7 @@ QTextEdit#transcript_area {
 
 /* AI response area */
 QTextEdit#ai_area {
-    background-color: rgba(99, 132, 255, 0.06);
+    background-color: rgba(99, 132, 255, 0.04);
     color: rgba(200, 215, 255, 0.92);
     border: 1px solid rgba(99, 132, 255, 0.1);
     border-radius: 10px;

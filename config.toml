@@ -1,6 +1,6 @@
 [general]
 theme = "dark"
-overlay_opacity = 0.92
+overlay_opacity = 0.75
 overlay_position = "top-right"
 overlay_width = 420
 overlay_height = 600
