@@ -20,8 +20,9 @@ class OverlayWindow(QWidget):
 
     COLLAPSED_WIDTH = 340
     COLLAPSED_HEIGHT = 36
-    EXPANDED_WIDTH = 340
-    EXPANDED_HEIGHT = 420
+    DEFAULT_EXPANDED_WIDTH = 380
+    DEFAULT_EXPANDED_HEIGHT = 450
+    RESIZE_MARGIN = 8  # pixels from edge to trigger resize
 
     def __init__(self, config):
         super().__init__()
@@ -71,7 +72,11 @@ class OverlayWindow(QWidget):
 
     def _apply_size(self):
         if self._expanded:
-            self.setFixedSize(self.EXPANDED_WIDTH, self.EXPANDED_HEIGHT)
+            # Remove fixed size constraints — allow free resize
+            self.setMinimumSize(280, 300)
+            self.setMaximumSize(800, 1200)
+            if self.width() < 280 or self.height() < 300:
+                self.resize(self.DEFAULT_EXPANDED_WIDTH, self.DEFAULT_EXPANDED_HEIGHT)
         else:
             self.setFixedSize(self.COLLAPSED_WIDTH, self.COLLAPSED_HEIGHT)
 
@@ -144,7 +149,7 @@ class OverlayWindow(QWidget):
         self.transcript.setObjectName("transcript_area")
         self.transcript.setReadOnly(True)
         self.transcript.setPlaceholderText("Alt+R to listen...")
-        self.transcript.setMaximumHeight(100)
+        self.transcript.setMinimumHeight(60)
         cl.addWidget(self.transcript)
 
         # AI response
@@ -329,17 +334,58 @@ class OverlayWindow(QWidget):
             self.show()
             self.raise_()
 
-    # ── Drag (Wayland: startSystemMove, X11: manual move) ──
+    # ── Drag + Resize (Wayland-native via startSystemMove/startSystemResize) ──
+
+    def _edge_at(self, pos):
+        """Detect which edge(s) the mouse is near for resizing."""
+        if not self._expanded:
+            return Qt.Edge(0)
+        m = self.RESIZE_MARGIN
+        r = self.rect()
+        edges = Qt.Edge(0)
+        if pos.x() <= m:
+            edges |= Qt.Edge.LeftEdge
+        if pos.x() >= r.width() - m:
+            edges |= Qt.Edge.RightEdge
+        if pos.y() <= m:
+            edges |= Qt.Edge.TopEdge
+        if pos.y() >= r.height() - m:
+            edges |= Qt.Edge.BottomEdge
+        return edges
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            # On Wayland, startSystemMove() lets the compositor handle the drag
             wh = self.windowHandle()
-            if wh:
+            if not wh:
+                return
+
+            edges = self._edge_at(event.position().toPoint())
+            if edges and self._expanded:
+                # Resize from edge
+                wh.startSystemResize(edges)
+            else:
+                # Drag from anywhere else
                 wh.startSystemMove()
             event.accept()
 
     def mouseMoveEvent(self, event):
+        # Update cursor shape based on edge proximity
+        if self._expanded:
+            edges = self._edge_at(event.position().toPoint())
+            if edges & Qt.Edge.LeftEdge and edges & Qt.Edge.TopEdge:
+                self.setCursor(Qt.CursorShape.SizeFDiagCursor)
+            elif edges & Qt.Edge.RightEdge and edges & Qt.Edge.BottomEdge:
+                self.setCursor(Qt.CursorShape.SizeFDiagCursor)
+            elif edges & Qt.Edge.RightEdge and edges & Qt.Edge.TopEdge:
+                self.setCursor(Qt.CursorShape.SizeBDiagCursor)
+            elif edges & Qt.Edge.LeftEdge and edges & Qt.Edge.BottomEdge:
+                self.setCursor(Qt.CursorShape.SizeBDiagCursor)
+            elif edges & (Qt.Edge.LeftEdge | Qt.Edge.RightEdge):
+                self.setCursor(Qt.CursorShape.SizeHorCursor)
+            elif edges & (Qt.Edge.TopEdge | Qt.Edge.BottomEdge):
+                self.setCursor(Qt.CursorShape.SizeVerCursor)
+            else:
+                self.setCursor(Qt.CursorShape.ArrowCursor)
         event.accept()
 
     def mouseReleaseEvent(self, event):
