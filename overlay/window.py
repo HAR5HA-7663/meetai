@@ -61,14 +61,24 @@ class OverlayWindow(QWidget):
             logger.warning(f"Could not hide from capture: {e}")
 
     def _position_window(self):
-        screen = QApplication.primaryScreen()
+        # Place overlay on the configured monitor (default: monitor you're NOT sharing)
+        overlay_monitor = self.config.get("general", "overlay_monitor", 1)
+        screens = QApplication.screens()
+
+        if overlay_monitor <= len(screens):
+            screen = screens[overlay_monitor - 1]
+        else:
+            screen = QApplication.primaryScreen()
+
         if not screen:
             return
+
         geo = screen.availableGeometry()
-        # Right edge, vertically centered
+        # Right edge of the target monitor, vertically centered
         x = geo.right() - self.COLLAPSED_WIDTH - 10
         y = geo.top() + (geo.height() - self.COLLAPSED_HEIGHT) // 3
         self.move(x, y)
+        logger.info(f"Overlay positioned on monitor {overlay_monitor}: {screen.name()} ({geo.width()}x{geo.height()})")
 
     def _apply_size(self):
         if self._expanded:
