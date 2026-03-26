@@ -56,6 +56,9 @@ This file serves as a persistent learning document for Claude Code when working 
 | 4 | Proposed region selection with slurp | User wants instant full-monitor capture on hotkey (Alt+/), no selection UI. Capture the MSI monitor (monitor 2). | **Screenshot = instant capture of configured monitor. No user interaction.** |
 | 5 | Proposed Anthropic/OpenAI Python SDKs for AI | User wants to use existing CLI tools: `claude -p`, `codex exec`, `gemini -p`. No SDK needed. | **Use CLI tools for AI, not Python SDKs. The CLI tools handle auth.** |
 | 6 | Named package directory `platform/` | Shadows Python stdlib `platform` module, breaks pynput. Renamed to `meetai_platform/`. | **Never name packages after stdlib modules (platform, os, sys, etc.)** |
+| 7 | Overlay was not draggable on Wayland | Regular Qt `move()` is blocked by Wayland. Need `BypassWindowManagerHint` flag to allow free positioning. | **On Wayland: always use BypassWindowManagerHint for draggable overlay windows.** |
+| 8 | Overlay was too big, blocked the screen | Made it a big 420x600 panel. Cluely is a TINY bar that expands only when needed. | **Start collapsed (thin bar), auto-expand only on speech/AI events. Don't block the user's view.** |
+| 9 | Didn't install torchaudio | Silero VAD depends on torchaudio. | **Always install torchaudio alongside torch for audio ML tasks.** |
 
 ---
 
