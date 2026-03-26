@@ -43,7 +43,6 @@ class OverlayWindow(QWidget):
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.Tool
-            | Qt.WindowType.BypassWindowManagerHint  # Enables free positioning on Wayland
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
@@ -330,20 +329,20 @@ class OverlayWindow(QWidget):
             self.show()
             self.raise_()
 
-    # ── Drag (works on Wayland with BypassWindowManagerHint) ──
+    # ── Drag (Wayland: startSystemMove, X11: manual move) ──
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
-            self._drag_pos = event.globalPosition().toPoint() - self.pos()
+            # On Wayland, startSystemMove() lets the compositor handle the drag
+            wh = self.windowHandle()
+            if wh:
+                wh.startSystemMove()
             event.accept()
 
     def mouseMoveEvent(self, event):
-        if self._drag_pos is not None and (event.buttons() & Qt.MouseButton.LeftButton):
-            self.move(event.globalPosition().toPoint() - self._drag_pos)
-            event.accept()
+        event.accept()
 
     def mouseReleaseEvent(self, event):
-        self._drag_pos = None
         event.accept()
 
     # ── Paint ──
