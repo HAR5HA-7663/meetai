@@ -3,7 +3,7 @@
 import logging
 import threading
 from vision.screenshot import capture_monitor
-from ai.cli_provider import CLIProvider
+from ai.cli_provider import get_provider
 from ai import prompts
 from ai.context import load_context
 from core.event_bus import event_bus
@@ -27,7 +27,7 @@ class ScreenshotAnalyzer:
             self._context = load_context(profile)
         if self._provider is None:
             tool = self.config.get("ai", "vision_provider", "claude")
-            self._provider = CLIProvider(tool=tool)
+            self._provider = get_provider(tool=tool)
 
     def analyze(self, mode: str = "meeting"):
         """Capture screenshot and analyze in a background thread."""

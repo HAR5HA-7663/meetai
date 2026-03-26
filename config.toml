@@ -20,6 +20,9 @@ compute_type = "int8"
 gpu_device_index = 0
 
 [ai]
+# Set your API key here for 3x faster responses (skip CLI overhead)
+# Or export ANTHROPIC_API_KEY=sk-ant-... in your shell
+anthropic_api_key = ""
 default_provider = "claude"
 vision_provider = "claude"
 code_provider = "codex"

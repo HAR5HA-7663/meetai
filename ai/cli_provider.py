@@ -128,6 +128,16 @@ class CLIProvider(AIProvider):
             return f"Error: {str(e)}"
 
 
-def get_provider(tool: str = "claude") -> CLIProvider:
-    """Factory function to get a CLI provider."""
+def get_provider(tool: str = "claude", config=None):
+    """Factory: use Anthropic API if key available (3x faster), else fall back to CLI."""
+    import os
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key and config:
+        api_key = config.get("ai", "anthropic_api_key", "")
+
+    if tool == "claude" and api_key:
+        from ai.api_provider import AnthropicProvider
+        logger.info("Using Anthropic API (fast mode)")
+        return AnthropicProvider(api_key=api_key)
+
     return CLIProvider(tool=tool)

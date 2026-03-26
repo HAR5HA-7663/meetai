@@ -4,7 +4,7 @@ import logging
 import threading
 import time
 
-from ai.cli_provider import CLIProvider
+from ai.cli_provider import get_provider as _get_cli_provider
 from ai.context import load_context
 from ai import prompts
 from core.event_bus import event_bus
@@ -40,7 +40,7 @@ class MeetingAssistant:
             tool = self.config.get("ai", "code_provider", "codex")
         else:
             tool = self.config.get("ai", "default_provider", "claude")
-        return CLIProvider(tool=tool)
+        return _get_cli_provider(tool=tool)
 
     def _on_speech_turn_ended(self, last_utterance: str):
         """Called when the other person stops speaking. Auto-send to Claude."""
