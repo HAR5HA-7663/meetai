@@ -20,8 +20,8 @@ DEFAULT_CONFIG = {
         "engine": "faster-whisper",
         "model": "small.en",
         "language": "en",
-        "device": "cuda",
-        "compute_type": "float16",
+        "device": "cpu",
+        "compute_type": "int8",
         "gpu_device_index": 0,
     },
     "ai": {
