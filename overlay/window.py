@@ -44,22 +44,9 @@ class OverlayWindow(QWidget):
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.Tool
-            | Qt.WindowType.X11BypassWindowManagerHint  # Extra hint for staying on top
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
-        self.setAttribute(Qt.WidgetAttribute.WA_X11DoNotAcceptFocus)
-
-        # Re-raise periodically to stay on top even when other windows claim focus
-        from PyQt6.QtCore import QTimer
-        self._raise_timer = QTimer(self)
-        self._raise_timer.timeout.connect(self._force_on_top)
-        self._raise_timer.start(2000)  # every 2 seconds
-
-    def _force_on_top(self):
-        """Periodically re-raise to stay above all windows."""
-        if self.isVisible():
-            self.raise_()
 
     def _hide_from_capture(self):
         try:

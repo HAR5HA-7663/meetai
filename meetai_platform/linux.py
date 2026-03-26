@@ -10,6 +10,34 @@ def hide_from_capture(window):
     """On Wayland/KDE, the overlay is naturally excluded from the screen share window picker.
     No API call needed — the user simply doesn't select the overlay window."""
     logger.info("Linux/Wayland: overlay is naturally excluded from screen sharing window picker")
+    _set_kwin_keep_above()
+
+
+def _set_kwin_keep_above():
+    """Load a KWin script that forces MeetAI to stay above all windows."""
+    import os
+    script_path = os.path.join(os.path.dirname(__file__), "kwin_above.js")
+    if not os.path.exists(script_path):
+        logger.warning(f"KWin script not found: {script_path}")
+        return
+    try:
+        # Unload previous instance if any
+        subprocess.run(
+            ["qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.unloadScript", "meetai_above"],
+            capture_output=True, timeout=3,
+        )
+        # Load and start the script
+        result = subprocess.run(
+            ["qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.loadScript", script_path, "meetai_above"],
+            capture_output=True, text=True, timeout=3,
+        )
+        subprocess.run(
+            ["qdbus6", "org.kde.KWin", "/Scripting", "org.kde.kwin.Scripting.start"],
+            capture_output=True, timeout=3,
+        )
+        logger.info(f"KWin keep-above script loaded: {result.stdout.strip()}")
+    except Exception as e:
+        logger.warning(f"Could not load KWin script: {e}")
 
 
 def list_audio_sources():
