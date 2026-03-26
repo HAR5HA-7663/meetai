@@ -3,7 +3,7 @@
 DARK_THEME = """
 /* Main floating bar */
 QWidget#overlay_main {
-    background-color: rgba(12, 12, 16, 190);
+    background-color: rgba(12, 12, 16, 150);
     border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 16px;
 }
