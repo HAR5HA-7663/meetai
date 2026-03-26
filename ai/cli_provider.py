@@ -80,22 +80,21 @@ class CLIProvider(AIProvider):
     def analyze_image(self, image_path: str, prompt: str, context: str = "") -> str:
         """Analyze an image using the CLI tool.
 
-        For Claude: we reference the image path in the prompt.
-        Claude CLI can handle image paths when passed correctly.
+        For Claude: needs --allowedTools Read --add-dir /tmp to access the screenshot file.
         """
         full_prompt = self._build_prompt(prompt, context)
+        import os
+        image_dir = os.path.dirname(image_path) or "/tmp"
 
         if self.tool == "claude":
-            # Claude Code can read images when given a file path
-            image_prompt = f"Look at this screenshot: {image_path}\n\n{full_prompt}"
-            cmd = ["claude", "-p", image_prompt]
+            image_prompt = f"Read and analyze this screenshot image: {image_path}\n\n{full_prompt}"
+            cmd = ["claude", "-p", image_prompt, "--allowedTools", "Read", "--add-dir", image_dir]
         elif self.tool == "gemini":
             image_prompt = f"Analyze the image at {image_path}:\n\n{full_prompt}"
             cmd = ["gemini", "-p", image_prompt]
         else:
-            # Codex doesn't support images well, fall back to claude
-            image_prompt = f"Look at this screenshot: {image_path}\n\n{full_prompt}"
-            cmd = ["claude", "-p", image_prompt]
+            image_prompt = f"Read and analyze this screenshot image: {image_path}\n\n{full_prompt}"
+            cmd = ["claude", "-p", image_prompt, "--allowedTools", "Read", "--add-dir", image_dir]
 
         return self._run_cli(cmd, timeout=180)
 
