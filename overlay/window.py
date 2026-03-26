@@ -150,7 +150,7 @@ class OverlayWindow(QWidget):
         self.transcript.setReadOnly(True)
         self.transcript.setPlaceholderText("Alt+R to listen...")
         self.transcript.setMinimumHeight(60)
-        cl.addWidget(self.transcript)
+        cl.addWidget(self.transcript, stretch=1)
 
         # AI response
         ah = QHBoxLayout()
@@ -173,7 +173,7 @@ class OverlayWindow(QWidget):
         self.ai_response.setObjectName("ai_area")
         self.ai_response.setReadOnly(True)
         self.ai_response.setPlaceholderText("Suggestions here...")
-        cl.addWidget(self.ai_response)
+        cl.addWidget(self.ai_response, stretch=4)
 
         # Controls row
         cr = QHBoxLayout()
