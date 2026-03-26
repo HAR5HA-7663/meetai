@@ -18,7 +18,7 @@ DEFAULT_CONFIG = {
     },
     "transcription": {
         "engine": "faster-whisper",
-        "model": "large-v3",
+        "model": "small.en",
         "language": "en",
         "device": "cuda",
         "compute_type": "float16",

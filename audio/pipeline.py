@@ -18,7 +18,7 @@ from core.event_bus import event_bus
 logger = logging.getLogger(__name__)
 
 # How often to do interim transcription while speech is ongoing (seconds)
-INTERIM_INTERVAL = 2.0
+INTERIM_INTERVAL = 1.5
 
 
 class AudioPipeline:
